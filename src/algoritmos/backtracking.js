@@ -1,6 +1,10 @@
+// Los 8 movimientos posibles del caballo
+const movX = [2, 1, -1, -2, -2, -1, 1, 2];
+const movY = [1, 2, 2, 1, -1, -2, -2, -1];
+
 // Se crea la matriz, la llena con 0's y llama a backtrack (no el de cieneguita)
 // Va a retornar la matriz con los números del recorrido o un mensaje diciendo que no tiene solución
-export function solveKnightsTour(NxN, posInicial, obstaculos) {
+export function solucionKnightsTour(NxN, posInicial, obstaculos) {
   // Crea la matriz
   let matriz = [];
   for (let i = 0; i < NxN; i++) {
@@ -14,19 +18,31 @@ export function solveKnightsTour(NxN, posInicial, obstaculos) {
   // Marca los obstáculos
   for (let i = 0; i < NxN; i++) {
     for (let j = 0; j < NxN; j++) {
-      let x = i;
-      let y = j;
-      let xString = x.toString();
-      let yString = y.toString();
-
-      let cordenada = xString + "," + yString;
-
+      let coordenada = i.toString() + "," + j.toString();
       if (obstaculos.includes(coordenada)) {
         matriz[i][j] = -1;
       }
     }
   }
-  backtrack(x, y, 0, matriz);
+  // Extraer x e y de posInicial, marca la casilla inicial como movimiento 1
+  let x = posInicial[0];
+  let y = posInicial[1];
+  matriz[x][y] = 1;
+
+  let totalCasillas = 0;
+  for (let i = 0; i < NxN; i++) {
+    for (let j = 0; j < NxN; j++) {
+      if (matriz[i][j] !== -1) {
+        totalCasillas++;
+      }
+    }
+  }
+
+  if (backtrack(x, y, 1, matriz, NxN, totalCasillas)) {
+    return matriz;
+  } else {
+    return "No tiene solución";
+  }
 }
 
 // Verifica que las coordenadas estén dentro del tablero, que la casilla no haya sido visitada todavía
@@ -40,43 +56,48 @@ function esValida(x, y, matriz, NxN) {
   return false;
 }
 
-function backtrack(x, y, contMovimiento, matriz) {}
+// Falta implementar que el caballo no pueda pasar sobre las casillas bloqueadas
+function backtrack(x, y, contMovimiento, matriz, NxN, totalCasillas) {
+  // Si ya se visitaron todas las casillas libres retorna true
+  if (contMovimiento === totalCasillas) {
+    return true;
+  }
 
-// Verifica que se hayan visitado todas las casillas
-function verificarVisitas(NxN, matriz) {
-  for (let i = 0; i < NxN; i++) {
-    for (let j = 0; j < NxN; j++) {
-      if (matriz[i][j] === 0) {
-        return false;
+  // Prueba los 8 movimientos posibles del caballo
+  for (let i = 0; i < 8; i++) {
+    let nuevoX = x + movX[i];
+    let nuevoY = y + movY[i];
+
+    if (esValida(nuevoX, nuevoY, matriz, NxN)) {
+      matriz[nuevoX][nuevoY] = contMovimiento + 1;
+      console.log(matriz);
+
+      if (
+        backtrack(
+          nuevoX,
+          nuevoY,
+          contMovimiento + 1,
+          matriz,
+          NxN,
+          totalCasillas,
+        )
+      ) {
+        return true;
       }
+
+      // Deshacer el movimiento
+      matriz[nuevoX][nuevoY] = 0;
     }
   }
+
+  // Ninguno de los movimientos funcionó
+  return false;
 }
 
-function prueba(NxN, obstaculos) {
-  let matriz = [];
-  for (let i = 0; i < NxN; i++) {
-    let fila = [];
-    for (let j = 0; j < NxN; j++) {
-      fila.push(0);
-    }
-    matriz.push(fila);
-  }
-  for (let i = 0; i < NxN; i++) {
-    for (let j = 0; j < NxN; j++) {
-      let x = i;
-      let y = j;
-      let xString = x.toString();
-      let yString = y.toString();
+// Prueba A
+const resA = solucionKnightsTour(5, [0, 0], []);
+console.table(resA);
 
-      let coordenada = xString + "," + yString;
-
-      if (obstaculos.includes(coordenada)) {
-        matriz[i][j] = -1;
-      }
-    }
-  }
-  return matriz;
-}
-
-console.log(prueba(5, ["0,2", "1,1", "3,3", "4,0"]));
+// Prueba B (sin solución)
+const resB = solveKnightsTour(3, [0, 0], []);
+console.log(resB);
