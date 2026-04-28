@@ -2,10 +2,9 @@
 const movX = [2, 1, -1, -2, -2, -1, 1, 2];
 const movY = [1, 2, 2, 1, -1, -2, -2, -1];
 
-// Se crea la matriz, la llena con 0's y llama a backtrack (no el de cieneguita)
-// Va a retornar la matriz con los números del recorrido o un mensaje diciendo que no tiene solución
+// Función principal
 export function solucionKnightsTour(NxN, posInicial, obstaculos) {
-  // Crea la matriz
+  
   let matriz = [];
   for (let i = 0; i < NxN; i++) {
     let fila = [];
@@ -15,19 +14,28 @@ export function solucionKnightsTour(NxN, posInicial, obstaculos) {
     matriz.push(fila);
   }
 
-  // Marca los obstáculos
+  // Marcar obstáculos con -1
   for (let i = 0; i < NxN; i++) {
     for (let j = 0; j < NxN; j++) {
-      let coordenada = i.toString() + "," + j.toString();
+      let coordenada = i + "," + j;
       if (obstaculos.includes(coordenada)) {
         matriz[i][j] = -1;
       }
     }
   }
-  // Extraer x e y de posInicial, marca la casilla inicial como movimiento 1
+
+  // Posición inicial
   let x = posInicial[0];
   let y = posInicial[1];
+
+  // Validar que no sea obstáculo
+  if (matriz[x][y] === -1) {
+    return "Posición inicial inválida";
+  }
+
+  // Marcar primer movimiento
   matriz[x][y] = 1;
+
 
   let totalCasillas = 0;
   for (let i = 0; i < NxN; i++) {
@@ -38,6 +46,7 @@ export function solucionKnightsTour(NxN, posInicial, obstaculos) {
     }
   }
 
+  // Ejecutar backtracking
   if (backtrack(x, y, 1, matriz, NxN, totalCasillas)) {
     return matriz;
   } else {
@@ -45,59 +54,92 @@ export function solucionKnightsTour(NxN, posInicial, obstaculos) {
   }
 }
 
-// Verifica que las coordenadas estén dentro del tablero, que la casilla no haya sido visitada todavía
-// y que no haya un obstáculo en la casilla
+// Verifica si una casilla es válida
 function esValida(x, y, matriz, NxN) {
-  if (x >= 0 && x < NxN && y >= 0 && y < NxN) {
-    if (matriz[x][y] === 0) {
-      return true;
-    }
-  }
-  return false;
+  return (
+    x >= 0 &&
+    x < NxN &&
+    y >= 0 &&
+    y < NxN &&
+    matriz[x][y] === 0
+  );
 }
 
-// Falta implementar que el caballo no pueda pasar sobre las casillas bloqueadas
+// Cuenta opciones futuras 
+function contarOpciones(x, y, matriz, NxN) {
+  let count = 0;
+
+  for (let i = 0; i < 8; i++) {
+    let nx = x + movX[i];
+    let ny = y + movY[i];
+
+    if (esValida(nx, ny, matriz, NxN)) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+// Backtracking principal
 function backtrack(x, y, contMovimiento, matriz, NxN, totalCasillas) {
-  // Si ya se visitaron todas las casillas libres retorna true
+  // Caso base
   if (contMovimiento === totalCasillas) {
     return true;
   }
 
-  // Prueba los 8 movimientos posibles del caballo
+  let movimientos = [];
+
+  // Generar movimientos válidos
   for (let i = 0; i < 8; i++) {
     let nuevoX = x + movX[i];
     let nuevoY = y + movY[i];
 
     if (esValida(nuevoX, nuevoY, matriz, NxN)) {
-      matriz[nuevoX][nuevoY] = contMovimiento + 1;
-      console.log(matriz);
-
-      if (
-        backtrack(
-          nuevoX,
-          nuevoY,
-          contMovimiento + 1,
-          matriz,
-          NxN,
-          totalCasillas,
-        )
-      ) {
-        return true;
-      }
-
-      // Deshacer el movimiento
-      matriz[nuevoX][nuevoY] = 0;
+      movimientos.push([nuevoX, nuevoY]);
     }
   }
 
-  // Ninguno de los movimientos funcionó
+  // Ordenar movimientos 
+  movimientos.sort((a, b) => {
+    return (
+      contarOpciones(a[0], a[1], matriz, NxN) -
+      contarOpciones(b[0], b[1], matriz, NxN)
+    );
+  });
+
+  // Intentar movimientos
+  for (let [nuevoX, nuevoY] of movimientos) {
+    matriz[nuevoX][nuevoY] = contMovimiento + 1;
+
+    if (
+      backtrack(
+        nuevoX,
+        nuevoY,
+        contMovimiento + 1,
+        matriz,
+        NxN,
+        totalCasillas
+      )
+    ) {
+      return true;
+    }
+
+    // Deshacer movimiento
+    matriz[nuevoX][nuevoY] = 0;
+  }
+
   return false;
 }
 
-// Prueba A
+// =======================
+// PRUEBAS
+// =======================
+
+// Prueba A (debe encontrar solución)
 const resA = solucionKnightsTour(5, [0, 0], []);
 console.table(resA);
 
-// Prueba B (sin solución)
-const resB = solveKnightsTour(3, [0, 0], []);
+// Prueba B (no tiene solución)
+const resB = solucionKnightsTour(3, [0, 0], []);
 console.log(resB);
