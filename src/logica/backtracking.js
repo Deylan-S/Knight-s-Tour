@@ -49,7 +49,7 @@ export function solucionKnightsTour(NxN, posInicial, obstaculos) {
     }
   }
 
-  // Extraer x e y de posInicial, marca la casilla inicial como movimiento 1
+  // Extraer x e y de posInicial
   let x = posInicial[0];
   let y = posInicial[1];
 
@@ -62,6 +62,7 @@ export function solucionKnightsTour(NxN, posInicial, obstaculos) {
     return "La posición inicial está bloqueada";
   }
 
+  // Marca la casilla inicial como movimiento 1
   matriz[x][y] = 1;
 
   // Recorre toda la matriz y cuenta las casillas que se deben visitar (excluyendo las obstaculizadas)
