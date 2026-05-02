@@ -5,7 +5,7 @@ const movY = [1, 2, 2, 1, -1, -2, -2, -1];
 // Variable que va a guardar el historial de movimientos del caballo
 const historial = [];
 
-// Rrueba del programa
+// Prueba del programa
 
 const tamaño = 5; // Tablero de 5x5
 const inicio = [0, 0];
