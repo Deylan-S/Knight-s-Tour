@@ -1,103 +1,190 @@
-// Los 8 movimientos posibles del caballo
-const movX = [2, 1, -1, -2, -2, -1, 1, 2];
-const movY = [1, 2, 2, 1, -1, -2, -2, -1];
+// Los 8 movimientos en L del caballo
+const MOV_X = [2, 1, -1, -2, -2, -1, 1, 2];
+const MOV_Y = [1, 2, 2, 1, -1, -2, -2, -1];
 
-// Se crea la matriz, la llena con 0's y llama a backtrack (no el de cieneguita)
-// Va a retornar la matriz con los números del recorrido o un mensaje diciendo que no tiene solución
-export function solucionKnightsTour(NxN, posInicial, obstaculos) {
-  // Crea la matriz
-  let matriz = [];
-  for (let i = 0; i < NxN; i++) {
+// Verifica si una celda está dentro del tablero y no ha sido visitada
+function esValida(x, y, tablero, N) {
+  if (x < 0 || x >= N) return false;
+  if (y < 0 || y >= N) return false;
+  if (tablero[x][y] !== 0) return false;
+  return true;
+}
+
+// Cuenta cuántos movimientos futuros
+// tiene una celda. Cuantos menos opciones, más prioritaria es.
+function contarOpciones(x, y, tablero, N) {
+  let count = 0;
+
+  for (let i = 0; i < 8; i++) {
+    let nx = x + MOV_X[i];
+    let ny = y + MOV_Y[i];
+
+    if (esValida(nx, ny, tablero, N)) {
+      count++;
+    }
+  }
+
+  return count;
+}
+
+// Backtracking recursivo con registro de pasos para la animación
+function backtrack(x, y, movNum, tablero, N, totalCasillas, pasos, stats) {
+  // Caso base: se visitaron todas las casillas libres
+  if (movNum === totalCasillas) {
+    return true;
+  }
+
+  // Generar todos los movimientos válidos desde la posición actual
+  let candidatos = [];
+
+  for (let i = 0; i < 8; i++) {
+    let nx = x + MOV_X[i];
+    let ny = y + MOV_Y[i];
+
+    if (esValida(nx, ny, tablero, N)) {
+      let opciones = contarOpciones(nx, ny, tablero, N);
+      candidatos.push({ nx: nx, ny: ny, opciones: opciones });
+    }
+  }
+
+  // Ordenar por Warnsdorff
+  candidatos.sort(function(a, b) {
+    return a.opciones - b.opciones;
+  });
+
+  // Intentar cada candidato
+  for (let c = 0; c < candidatos.length; c++) {
+    let nx = candidatos[c].nx;
+    let ny = candidatos[c].ny;
+
+    // Marcca la celda con el número de movimiento
+    tablero[nx][ny] = movNum + 1;
+    stats.intentos++;
+
+    let snapshotAvance = [];
+    for (let i = 0; i < N; i++) {
+      snapshotAvance.push([...tablero[i]]);
+    }
+
+    pasos.push({
+      tipo: "avance",
+      x: nx,
+      y: ny,
+      numero: movNum + 1,
+      tablero: snapshotAvance,
+    });
+
+    // Llamada recursiva
+    let exito = backtrack(nx, ny, movNum + 1, tablero, N, totalCasillas, pasos, stats);
+
+    if (exito) {
+      return true;
+    }
+
+    // Retroceso: desmarcar la celda
+    tablero[nx][ny] = 0;
+    stats.retrocesos++;
+
+    let snapshotRetroceso = [];
+    for (let i = 0; i < N; i++) {
+      snapshotRetroceso.push([...tablero[i]]);
+    }
+
+    pasos.push({
+      tipo: "retroceso",
+      x: nx,
+      y: ny,
+      numero: 0,
+      tablero: snapshotRetroceso,
+    });
+  }
+
+  return false;
+}
+
+
+export function solucionKnightsTour(N, posInicial, obstaculos) {
+  // Crear tablero vacío
+  let tablero = [];
+  for (let i = 0; i < N; i++) {
     let fila = [];
-    for (let j = 0; j < NxN; j++) {
+    for (let j = 0; j < N; j++) {
       fila.push(0);
     }
-    matriz.push(fila);
+    tablero.push(fila);
   }
 
-  // Marca los obstáculos
-  for (let i = 0; i < NxN; i++) {
-    for (let j = 0; j < NxN; j++) {
-      let coordenada = i.toString() + "," + j.toString();
-      if (obstaculos.includes(coordenada)) {
-        matriz[i][j] = -1;
-      }
+  // Marcar obstáculos con -1
+  for (let k = 0; k < obstaculos.length; k++) {
+    let partes = obstaculos[k].split(",");
+    let i = Number(partes[0]);
+    let j = Number(partes[1]);
+
+    if (i >= 0 && i < N && j >= 0 && j < N) {
+      tablero[i][j] = -1;
     }
   }
-  // Extraer x e y de posInicial, marca la casilla inicial como movimiento 1
+
   let x = posInicial[0];
   let y = posInicial[1];
-  matriz[x][y] = 1;
 
+  // Validar que la posición inicial sea usable
+  if (x < 0 || x >= N || y < 0 || y >= N || tablero[x][y] === -1) {
+    return "Posición inicial inválida.";
+  }
+
+  // Contar cuántas casillas están libres (sin obstáculos)
   let totalCasillas = 0;
-  for (let i = 0; i < NxN; i++) {
-    for (let j = 0; j < NxN; j++) {
-      if (matriz[i][j] !== -1) {
+  for (let i = 0; i < N; i++) {
+    for (let j = 0; j < N; j++) {
+      if (tablero[i][j] !== -1) {
         totalCasillas++;
       }
     }
   }
 
-  if (backtrack(x, y, 1, matriz, NxN, totalCasillas)) {
-    return matriz;
-  } else {
-    return "No tiene solución";
+  // Marcar posición inicial como primer movimiento
+  tablero[x][y] = 1;
+
+  let pasos = [];
+  let stats = { intentos: 0, retrocesos: 0 };
+
+  // Registrar el primer paso (posición inicial)
+  let snapshotInicial = [];
+  for (let i = 0; i < N; i++) {
+    snapshotInicial.push([...tablero[i]]);
   }
+
+  pasos.push({
+    tipo: "avance",
+    x: x,
+    y: y,
+    numero: 1,
+    tablero: snapshotInicial,
+  });
+
+  // Ejecutar el algoritmo y medir tiempo
+  let inicio = performance.now();
+  let encontrado = backtrack(x, y, 1, tablero, N, totalCasillas, pasos, stats);
+  let fin = performance.now();
+
+  if (!encontrado) {
+    return "No tiene solución con esta configuración.";
+  }
+
+  // Construir tablero final
+  let tableroFinal = [];
+  for (let i = 0; i < N; i++) {
+    tableroFinal.push([...tablero[i]]);
+  }
+
+  return {
+    pasos: pasos,
+    tableroFinal: tableroFinal,
+    stats: {
+      intentos: stats.intentos,
+      retrocesos: stats.retrocesos,
+      tiempoMs: (fin - inicio).toFixed(2),
+    },
+  };
 }
-
-// Verifica que las coordenadas estén dentro del tablero, que la casilla no haya sido visitada todavía
-// y que no haya un obstáculo en la casilla
-function esValida(x, y, matriz, NxN) {
-  if (x >= 0 && x < NxN && y >= 0 && y < NxN) {
-    if (matriz[x][y] === 0) {
-      return true;
-    }
-  }
-  return false;
-}
-
-// Falta implementar que el caballo no pueda pasar sobre las casillas bloqueadas
-function backtrack(x, y, contMovimiento, matriz, NxN, totalCasillas) {
-  // Si ya se visitaron todas las casillas libres retorna true
-  if (contMovimiento === totalCasillas) {
-    return true;
-  }
-
-  // Prueba los 8 movimientos posibles del caballo
-  for (let i = 0; i < 8; i++) {
-    let nuevoX = x + movX[i];
-    let nuevoY = y + movY[i];
-
-    if (esValida(nuevoX, nuevoY, matriz, NxN)) {
-      matriz[nuevoX][nuevoY] = contMovimiento + 1;
-      console.log(matriz);
-
-      if (
-        backtrack(
-          nuevoX,
-          nuevoY,
-          contMovimiento + 1,
-          matriz,
-          NxN,
-          totalCasillas,
-        )
-      ) {
-        return true;
-      }
-
-      // Deshacer el movimiento
-      matriz[nuevoX][nuevoY] = 0;
-    }
-  }
-
-  // Ninguno de los movimientos funcionó
-  return false;
-}
-
-// Prueba A
-const resA = solucionKnightsTour(5, [0, 0], []);
-console.table(resA);
-
-// Prueba B (sin solución)
-const resB = solveKnightsTour(3, [0, 0], []);
-console.log(resB);
