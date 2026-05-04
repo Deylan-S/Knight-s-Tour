@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { solucionKnightsTour } from "./algoritmos/backtracking";
+import { solucionKnightsTour } from "./logica/backtracking";
 import { contarCaminosDP, contarCaminosBruta } from "./logica/PdCaminos";
 import caballoImg from "./assets/knight.png";
 import "./App.css";
