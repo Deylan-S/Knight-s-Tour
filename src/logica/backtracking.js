@@ -73,11 +73,26 @@ export function solucionKnightsTour(NxN, posInicial, obstaculos) {
   for (let i = 0; i < NxN; i++) {
     snapshotInicial.push([...matriz[i]]);
   }
-  historial.push({ tipo: "avance", x: x, y: y, numero: 1, tablero: snapshotInicial });
+  historial.push({
+    tipo: "avance",
+    x: x,
+    y: y,
+    numero: 1,
+    tablero: snapshotInicial,
+  });
 
   // Si retorna la matriz tiene solución, de lo contrario no la tiene
   let inicio = performance.now();
-  let encontrado = backtrack(x, y, 1, matriz, NxN, totalCasillas, historial, stats);
+  let encontrado = backtrack(
+    x,
+    y,
+    1,
+    matriz,
+    NxN,
+    totalCasillas,
+    historial,
+    stats,
+  );
   let fin = performance.now();
 
   if (!encontrado) {
@@ -164,24 +179,43 @@ function caminoDespejado(x, y, destinoX, destinoY, matriz) {
 
 // Intenta hacer todos los movimientos posibles mientras verifica que sean válidos hasta recorrer todo el tablero,
 // en caso de que no haya solucón lo notifica
-function backtrack(x, y, contMovimiento, matriz, NxN, totalCasillas, historial, stats) {
+function backtrack(
+  x,
+  y,
+  contMovimiento,
+  matriz,
+  NxN,
+  totalCasillas,
+  historial,
+  stats,
+) {
   // Si ya se visitaron todas las casillas libres retorna true
   if (contMovimiento === totalCasillas) {
     return true;
   }
 
-  // Genera los candidatos válidos y los ordena con Warnsdorff
+  // Genera los candidatos válidos y los ordena con Warnsdorff SOLO si NxN >= 8
   let candidatos = [];
   for (let i = 0; i < 8; i++) {
     let nuevoX = x + movX[i];
     let nuevoY = y + movY[i];
-    if (esValida(nuevoX, nuevoY, matriz, NxN) && caminoDespejado(x, y, nuevoX, nuevoY, matriz)) {
-      candidatos.push({ nuevoX: nuevoX, nuevoY: nuevoY, opciones: contarOpciones(nuevoX, nuevoY, matriz, NxN) });
+    if (
+      esValida(nuevoX, nuevoY, matriz, NxN) &&
+      caminoDespejado(x, y, nuevoX, nuevoY, matriz)
+    ) {
+      candidatos.push({
+        nuevoX: nuevoX,
+        nuevoY: nuevoY,
+        opciones: contarOpciones(nuevoX, nuevoY, matriz, NxN),
+      });
     }
   }
-  candidatos.sort(function(a, b) {
-    return a.opciones - b.opciones;
-  });
+
+  if (NxN >= 8) {
+    candidatos.sort(function (a, b) {
+      return a.opciones - b.opciones;
+    });
+  }
 
   // Prueba los 8 movimientos posibles del caballo
   for (let c = 0; c < candidatos.length; c++) {
@@ -206,7 +240,18 @@ function backtrack(x, y, contMovimiento, matriz, NxN, totalCasillas, historial, 
     });
 
     // Llamada recursiva
-    if (backtrack(nuevoX, nuevoY, contMovimiento + 1, matriz, NxN, totalCasillas, historial, stats)) {
+    if (
+      backtrack(
+        nuevoX,
+        nuevoY,
+        contMovimiento + 1,
+        matriz,
+        NxN,
+        totalCasillas,
+        historial,
+        stats,
+      )
+    ) {
       return true;
     }
 
