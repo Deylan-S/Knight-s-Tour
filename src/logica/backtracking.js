@@ -206,7 +206,7 @@ function backtrack(
       candidatos.push({
         nuevoX: nuevoX,
         nuevoY: nuevoY,
-        opciones: contarOpciones(nuevoX, nuevoY, matriz, NxN),
+        opciones: NxN >= 8 ? contarOpciones(nuevoX, nuevoY, matriz, NxN) : 0,
       });
     }
   }
