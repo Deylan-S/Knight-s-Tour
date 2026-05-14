@@ -194,7 +194,7 @@ function backtrack(
     return true;
   }
 
-  // Genera los candidatos válidos y los ordena con Warnsdorff SOLO si NxN >= 8
+  // Genera los candidatos válidos y los ordena con Warnsdorff SOLO si NxN >= 7
   let candidatos = [];
   for (let i = 0; i < 8; i++) {
     let nuevoX = x + movX[i];
@@ -211,7 +211,7 @@ function backtrack(
     }
   }
 
-  if (NxN >= 8) {
+  if (NxN >= 7) {
     candidatos.sort(function (a, b) {
       return a.opciones - b.opciones;
     });
